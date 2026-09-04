@@ -1,0 +1,37 @@
+services:
+  app:
+    build: .
+    container_name: ticket_engine_app
+    restart: always
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+
+  redis:
+    image: redis:alpine
+    container_name: ticket_engine_redis
+    restart: always
+    volumes:
+      - redis_data:/data
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: ticket_engine_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  redis_data:
+  postgres_data:
