@@ -1,7 +1,9 @@
+/// <reference types="node" />
+
 import { defineConfig } from "prisma/config";
 
 export default defineConfig({
-  skills: {
-    agents: ["claude", "cursor", "agents", "devin"],
+  datasource: {
+    url: process.env.DATABASE_URL,
   },
 });

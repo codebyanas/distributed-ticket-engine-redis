@@ -135,3 +135,9 @@ logger.error(
   { err, ticketId: 't-101', userId: 'u-505' }, 
   'Failed to process ticket payment transaction'
 );
+
+---
+
+## 12. Package Manager & Styling Hygiene
+* **Strict Package Manager (`pnpm` Only):** Exclusively use `pnpm` for dependency management and script execution (`pnpm add`, `pnpm add -D`, `pnpm run <script>`). Never suggest or execute `npm` or `yarn` commands.
+* **Zero Emoji Policy:** Emojis are strictly forbidden across the entire repository—including source code, JSDoc comments, logger output messages, error text, commit messages, and documentation. All text must remain strictly professional and clean ASCII/UTF-8.
