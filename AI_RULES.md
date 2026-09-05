@@ -104,7 +104,7 @@ export async function lockSeatAtomically(seatId: string, userId: string): Promis
   * `tests/e2e/`: Full end-to-end lifecycle flows (**Signup ➔ Search ➔ Hold ➔ Stream Settlement ➔ Reconciliation**).
   * `tests/concurrency/`: Multithreaded race condition verification.
 * **Synthetic Race Condition Tests (`tests/concurrency/`):** Use `Promise.all()` to dispatch 50+ concurrent requests to a single seat/resource in the exact same millisecond, mathematically proving 0% overselling.
-* **Test Environment Isolation (`testDb.ts`):** Maintain explicit database cleanup (`cleanDatabase()`) and seed helpers to guarantee 100% state parity across test runs. Conditionally suppress logger noise (`morgan`) during test executions.
+* **Test Environment Isolation (`testDb.ts`):** Maintain explicit database cleanup (`cleanDatabase()`) and seed helpers to guarantee 100% state parity across test runs. Conditionally suppress logger noise (`pino`) during test executions.
 
 ---
 
@@ -112,3 +112,26 @@ export async function lockSeatAtomically(seatId: string, userId: string): Promis
 1. **Context Check:** Always consult `PROJECT_CONTEXT.md` before generating code to verify the current **Active Phase** and system architecture.
 2. **Scope Discipline:** Focus strictly on the task at hand. Do not modify working configurations or rewrite unrelated modules.
 3. **Phase Update Routine:** Upon completing a phase or milestone, prompt the developer to update `PROJECT_CONTEXT.md` to keep session state perfectly synchronized.
+
+---
+
+## 11. Logging Standards & Best Practices
+* **Pino Integration Only:** Always use structured logging with Pino via `logger` imported from `src/utils/logger.js`.
+* **Zero `console.log` Policy:** `console.log` or plain string logging is strictly forbidden in business logic and middlewares.
+* **Mandatory Contextual Metadata:** Always pass a contextual metadata object as the first argument, followed by a human-readable technical log message.
+
+### Example Logging Pattern:
+```typescript
+import { logger } from '../utils/logger.js';
+
+// Success / Contextual Log
+logger.info(
+  { ticketId: 't-101', userId: 'u-505', lockTtlMs: 3000 }, 
+  'Redis lock acquired successfully'
+);
+
+// Error Log
+logger.error(
+  { err, ticketId: 't-101', userId: 'u-505' }, 
+  'Failed to process ticket payment transaction'
+);
