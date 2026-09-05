@@ -1,28 +1,38 @@
 import http from 'http';
 import app from './app.js';
 import { env } from './config/env.js';
+import { connectDatabase, disconnectDatabase } from './config/database.config.js';
 import { logger } from './utils/logger.js';
 
 /**
  * Initializes and starts the HTTP listener on the configured port.
- * Registers process signal handlers (SIGTERM, SIGINT) and exception guards.
+ * Tests PostgreSQL database connection and registers process signal handlers.
  * 
- * @returns Active HTTP Server instance.
+ * @returns Promise resolving to active HTTP Server instance.
  */
-const startServer = (): http.Server => {
+const startServer = async (): Promise<http.Server> => {
+  // Verify PostgreSQL Database Connection
+  await connectDatabase();
+
   const server = http.createServer(app);
 
   server.listen(env.PORT, () => {
-    logger.info(`EventLock Engine running on http://localhost:${env.PORT} [Environment: ${env.NODE_ENV}]`);
+    logger.info(`🚀 EventLock Engine running on http://localhost:${env.PORT} [Environment: ${env.NODE_ENV}]`);
   });
 
   /**
-   * Performs graceful process shutdown by closing HTTP server listeners.
+   * Performs graceful process shutdown by closing database connection pool and HTTP server listeners.
    * 
    * @param signal - Received OS signal identifier.
    */
-  const gracefulShutdown = (signal: string): void => {
+  const gracefulShutdown = async (signal: string): Promise<void> => {
     logger.info(`Received ${signal}. Initiating graceful shutdown sequence...`);
+
+    try {
+      await disconnectDatabase();
+    } catch (err) {
+      logger.error({ err }, 'Error disconnecting PostgreSQL during shutdown');
+    }
 
     server.close((err?: Error) => {
       if (err) {
@@ -41,8 +51,12 @@ const startServer = (): http.Server => {
   };
 
   // OS Signal Listeners
-  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  process.on('SIGTERM', () => {
+    void gracefulShutdown('SIGTERM');
+  });
+  process.on('SIGINT', () => {
+    void gracefulShutdown('SIGINT');
+  });
 
   // Unhandled exception and rejection process guards
   process.on('uncaughtException', (error: Error) => {
@@ -58,4 +72,4 @@ const startServer = (): http.Server => {
   return server;
 };
 
-startServer();
+void startServer();
