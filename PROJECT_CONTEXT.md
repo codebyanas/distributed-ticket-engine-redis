@@ -37,9 +37,15 @@ distributed-ticket-engine-redis/
 ├── tsconfig.json                 # Strict TypeScript compiler options
 │
 ├── prisma/                       # Prisma ORM & Database Layer
-│   ├── schema.prisma             # PostgreSQL Models, B-Tree & GIN indexes
 │   ├── migrations/               # Database SQL migration history
-│   └── seed.ts                   # Seeder populating 1M+ records & 500 users
+│   ├── schema/
+│   │   ├── base.prisma           # Datasource, Generator & Enums
+│   │   ├── user.prisma           # User & Auth Models
+│   │   ├── event.prisma          # Event & Venue Models
+│   │   ├── ticket.prisma         # Ticket Inventory & Pricing Models
+│   │   ├── booking.prisma        # Booking & Reservation Models
+│   │   └── auditLog.prisma       # Audit Log & Outbox Sync Models
+│   └── seed.ts                   # Database Seeding Script (1M+ records & 500 users)
 │
 ├── src/                          # Application Source Directory
 │   ├── server.ts                 # HTTP & WebSocket Listener, Signal Handlers
