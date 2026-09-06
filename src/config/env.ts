@@ -11,15 +11,11 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().default(5000),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
-  POSTGRES_HOST: z.string().default('localhost'),
-  POSTGRES_PORT: z.coerce.number().default(5432),
-  POSTGRES_USER: z.string().default('admin'),
-  POSTGRES_PASSWORD: z.string().default('secret'),
-  POSTGRES_DB: z.string().default('eventlock_db'),
-  REDIS_HOST: z.string().default('localhost'),
-  REDIS_PORT: z.coerce.number().default(6379),
+  REDIS_URL: z.string().url().default('redis://localhost:6379'),
   JWT_SECRET: z.string().min(16, 'JWT_SECRET must be at least 16 characters long'),
 });
+
+type ParsedEnv = z.infer<typeof envSchema>;
 
 /**
  * Validates process.env against envSchema.
@@ -27,11 +23,15 @@ const envSchema = z.object({
  * 
  * @returns Parsed and strongly-typed environment variables.
  */
-const parseEnv = () => {
+const parseEnv = (): ParsedEnv => {
   const result = envSchema.safeParse(process.env);
 
   if (!result.success) {
-    console.error('❌ Environment validation failed:', JSON.stringify(result.error.format(), null, 2));
+    const issues = result.error.issues.map((issue) => ({
+      path: issue.path.join('.') || 'root',
+      message: issue.message,
+    }));
+    console.error('Environment validation failed:', JSON.stringify(issues, null, 2));
     process.exit(1);
   }
 
@@ -39,4 +39,4 @@ const parseEnv = () => {
 };
 
 export const env = parseEnv();
-export type Env = z.infer<typeof envSchema>;
+export type Env = ParsedEnv;

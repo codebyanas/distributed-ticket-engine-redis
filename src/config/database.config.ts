@@ -8,6 +8,10 @@ import { logger } from '../utils/logger.js';
 const pool = new pg.Pool({ connectionString: env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 
+pool.on('error', (error: Error): void => {
+  logger.error({ err: error }, 'Unexpected PostgreSQL pool error');
+});
+
 /**
  * Singleton PrismaClient instance configured with PostgreSQL driver adapter.
  */
@@ -26,22 +30,15 @@ export const connectDatabase = async (): Promise<boolean> => {
   try {
     logger.info('Connecting to PostgreSQL database...');
     await prisma.$queryRaw`SELECT 1;`;
-    logger.info('✅ PostgreSQL Database connected successfully.');
+    logger.info('PostgreSQL Database connected successfully.');
     return true;
   } catch (error: unknown) {
-    const maskedUrl = env.DATABASE_URL.replace(/:[^:@]+@/, ':****@');
-    if (error instanceof Error) {
-      logger.error(
-        {
-          name: error.name,
-          message: error.message,
-          databaseUrl: maskedUrl,
-        },
-        '❌ PostgreSQL Database connection failed'
-      );
-    } else {
-      logger.error({ error, databaseUrl: maskedUrl }, '❌ Unknown database error occurred');
-    }
+    const maskedUrl = env.DATABASE_URL.replace(/(postgres(?:ql)?:\/\/[^:]+:)[^@]+@/, '$1****@');
+    const errorDetails = error instanceof Error
+      ? { name: error.name, message: error.message, stack: error.stack }
+      : { message: typeof error === 'string' ? error : 'Unknown PostgreSQL error', value: error };
+
+    logger.error({ err: errorDetails, databaseUrl: maskedUrl }, 'PostgreSQL database connection failed');
     return false;
   }
 };
@@ -55,6 +52,10 @@ export const disconnectDatabase = async (): Promise<void> => {
     await pool.end();
     logger.info('PostgreSQL Database pool disconnected.');
   } catch (error: unknown) {
-    logger.error({ error }, 'Error during PostgreSQL disconnect');
+    const errorDetails = error instanceof Error
+      ? { name: error.name, message: error.message, stack: error.stack }
+      : { message: typeof error === 'string' ? error : 'Unknown PostgreSQL disconnect error', value: error };
+
+    logger.error({ err: errorDetails }, 'Error during PostgreSQL disconnect');
   }
 };

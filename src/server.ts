@@ -2,6 +2,7 @@ import http from 'http';
 import app from './app.js';
 import { env } from './config/env.js';
 import { connectDatabase, disconnectDatabase } from './config/database.config.js';
+import { connectRedis, disconnectRedis } from './config/redis.config.js';
 import { logger } from './utils/logger.js';
 
 /**
@@ -13,11 +14,12 @@ import { logger } from './utils/logger.js';
 const startServer = async (): Promise<http.Server> => {
   // Verify PostgreSQL Database Connection
   await connectDatabase();
+  await connectRedis();
 
   const server = http.createServer(app);
 
   server.listen(env.PORT, () => {
-    logger.info(`🚀 EventLock Engine running on http://localhost:${env.PORT} [Environment: ${env.NODE_ENV}]`);
+    logger.info(`EventLock Engine running on http://localhost:${env.PORT} [Environment: ${env.NODE_ENV}]`);
   });
 
   /**
@@ -29,6 +31,7 @@ const startServer = async (): Promise<http.Server> => {
     logger.info(`Received ${signal}. Initiating graceful shutdown sequence...`);
 
     try {
+      await disconnectRedis();
       await disconnectDatabase();
     } catch (err) {
       logger.error({ err }, 'Error disconnecting PostgreSQL during shutdown');
