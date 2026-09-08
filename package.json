@@ -9,9 +9,16 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
-    "test": "jest",
-    "test:concurrency": "jest tests/concurrency --runInBand",
-    "benchmark": "autocannon -c 100 -d 30 http://localhost:5000"
+    "docker:start": "docker compose up -d",
+    "docker:stop": "docker compose stop",
+    "docker:down": "docker compose down",
+    "docker:restart": "docker compose restart",
+    "docker:status": "docker compose ps",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "test:cov": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --coverage",
+    "test:concurrency": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js tests/concurrency --runInBand",
+    "benchmark": "autocannon -c 100 -d 30 http://localhost:5000/api/v1/rate-limit-test",
+    "benchmark:rate-limit": "autocannon -c 20 -d 5 http://localhost:5000/api/v1/rate-limit-test"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

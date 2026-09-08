@@ -1,0 +1,46 @@
+{
+  "info": {
+    "name": "EventLock Engine - Phase 1 Rate Limiting",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/health"
+      }
+    },
+    {
+      "name": "Rate limit protected endpoint",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/rate-limit-test"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Response is successful or rate limited', function () {",
+              "    pm.expect([200, 429]).to.include(pm.response.code);",
+              "});",
+              "if (pm.response.code === 429) {",
+              "    pm.expect(pm.response.headers.has('Retry-After')).to.be.true;",
+              "}"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

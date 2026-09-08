@@ -7,6 +7,8 @@ import { pinoHttp } from "pino-http";
 import { logger } from "./utils/logger.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import { NotFoundError } from "./utils/custom-errors.js";
+import { rateLimiter } from "./middlewares/rateLimiter.js";
+import { env } from "./config/env.js";
 
 /**
  * Factory function that initializes and configures the Express application.
@@ -34,6 +36,12 @@ export const createApp = (): Express => {
     }),
   );
 
+  app.use(rateLimiter({
+    windowMs: env.RATE_LIMIT_WINDOW_MS,
+    maxRequests: env.RATE_LIMIT_MAX_REQUESTS,
+    skip: (request: Request): boolean => request.path === "/" || request.path === "/health",
+  }));
+
   // Root & Health check routes
   app.get("/", (_req: Request, res: Response): void => {
     res.status(200).json({
@@ -48,6 +56,13 @@ export const createApp = (): Express => {
       status: "ok",
       uptime: process.uptime(),
       timestamp: new Date().toISOString(),
+    });
+  });
+
+  app.get("/api/v1/rate-limit-test", (_req: Request, res: Response): void => {
+    res.status(200).json({
+      status: "ok",
+      message: "Request passed the Redis rate limiter",
     });
   });
 
