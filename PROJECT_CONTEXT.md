@@ -111,11 +111,11 @@ distributed-ticket-engine-redis/
 
 ## 🏁 Master Execution Roadmap & Phase Tracker
 
-- [ ] **Phase 1: Traffic Shielding & Bot Defense** `[STATUS: IN_PROGRESS]`
+- [x] **Phase 1: Traffic Shielding & Bot Defense** `[STATUS: COMPLETED]`
   * **Objective:** Implement a native Redis `ZSET` Sliding Window Log Rate Limiter middleware to drop abusive traffic at the API edge.
   * **Target Deliverables:** `src/middlewares/rateLimiter.ts`, `src/scripts/lua/sliding_window.lua`, `src/config/redis.config.ts`.
 
-- [ ] **Phase 2: Database Protection & Stampede Shield** `[STATUS: NOT_STARTED]`
+- [ ] **Phase 2: Database Protection & Stampede Shield** `[STATUS: IN_PROGRESS]`
   * **Objective:** Build a Distributed Mutex Lock (`SET NX PX`) re-hydration guard to defend PostgreSQL against thundering herd spikes when 1M+ key caches expire.
   * **Target Deliverables:** `src/services/stampede.service.ts`, production-tuned `redis.conf` LRU memory policies.
 
@@ -143,12 +143,12 @@ distributed-ticket-engine-redis/
 
 ## 🎯 Current Active Milestone Focus
 
-**Active Milestone:** **Phase 1 — Project Initialization & Traffic Shielding**
+**Active Milestone:** **Phase 2 — Database Protection & Cache Stampede Shield**
 * **Active Tasks:**
-  1. Initialize project files (`package.json`, `tsconfig.json`, `docker-compose.yml`, `redis.conf`).
-  2. Implement Zod boot-time environment validation (`src/config/env.ts`).
-  3. Setup singleton Redis client connection pool (`src/config/redis.config.ts`) and Prisma client (`src/config/database.config.ts`).
-  4. Develop Redis `ZSET` Sliding Window Rate Limiting middleware (`src/middlewares/rateLimiter.ts`).
+  1. Implement a distributed mutex using Redis `SET NX PX`.
+  2. Build cache-aside seating-map re-hydration around the mutex.
+  3. Configure cache TTL and production Redis eviction policy.
+  4. Add stampede protection tests for concurrent cache misses.
 
 ---
 

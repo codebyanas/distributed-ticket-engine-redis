@@ -1,6 +1,7 @@
 import { Redis } from 'ioredis';
 import { env } from './env.js';
 import { logger } from '../utils/logger.js';
+import { loadLuaScripts } from '../scripts/lua-loader.js';
 
 /**
  * Shared Redis client for rate limiting, locking, caching, streams, and pub/sub.
@@ -28,6 +29,7 @@ export const connectRedis = async (): Promise<void> => {
 		logger.info('Connecting to Redis...');
 		await redis.connect();
 		await redis.ping();
+		await loadLuaScripts(redis);
 		logger.info('Redis connected successfully.');
 	} catch (error: unknown) {
 		const errorDetails = error instanceof Error
