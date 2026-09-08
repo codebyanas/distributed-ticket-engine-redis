@@ -2,6 +2,7 @@
   "name": "distributed-ticket-engine-redis",
   "version": "1.0.0",
   "type": "module",
+  "packageManager": "pnpm@9.15.9",
   "scripts": {
     "dev": "tsx watch src/server.ts | pino-pretty --translateTime HH:MM:ss Z --ignore pid,hostname,req,res,env",
     "build": "prisma generate && tsc",
@@ -14,6 +15,7 @@
     "docker:down": "docker compose down",
     "docker:restart": "docker compose restart",
     "docker:status": "docker compose ps",
+    "ci:local": "scripts\\ci-local.cmd",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
     "test:cov": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --coverage",
     "test:concurrency": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js tests/concurrency --runInBand",
