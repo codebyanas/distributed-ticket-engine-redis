@@ -9,6 +9,7 @@ import { errorHandler } from "./middlewares/error.middleware.js";
 import { NotFoundError } from "./utils/custom-errors.js";
 import { rateLimiter } from "./middlewares/rateLimiter.js";
 import { env } from "./config/env.js";
+import apiRouter from "./routes/index.js";
 
 /**
  * Factory function that initializes and configures the Express application.
@@ -65,6 +66,8 @@ export const createApp = (): Express => {
       message: "Request passed the Redis rate limiter",
     });
   });
+
+  app.use('/api/v1', apiRouter);
 
   // Catch-all 404 handler for unknown routes
   app.use((_req: Request, _res: Response, next: NextFunction): void => {
