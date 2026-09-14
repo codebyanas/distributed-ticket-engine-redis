@@ -14,3 +14,19 @@ export interface SeatingMap {
 	startsAt: string;
 	seats: SeatingMapSeat[];
 }
+
+export type SeatingMapMode = 'direct' | 'redis-protected';
+
+export interface SeatingMapExecutionMeta {
+	mode: SeatingMapMode;
+	cacheHit: boolean;
+	lockAcquired: boolean;
+	waitedForLock: boolean;
+	databaseLoaded: boolean;
+	durationMs: number;
+}
+
+export interface SeatingMapResult {
+	map: SeatingMap;
+	meta: SeatingMapExecutionMeta;
+}
