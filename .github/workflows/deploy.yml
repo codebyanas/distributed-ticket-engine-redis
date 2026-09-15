@@ -33,13 +33,6 @@ jobs:
             test -f docker-compose.yml
             test -f package.json
 
-            echo "Installing dependencies on the VM..."
-            if ! command -v pnpm >/dev/null 2>&1; then
-              corepack enable
-              corepack prepare pnpm@9.15.9 --activate
-            fi
-            pnpm install --frozen-lockfile
-
             echo "Stopping old containers..."
             docker compose down --remove-orphans || true
 
@@ -47,6 +40,6 @@ jobs:
             docker compose up -d --build
 
             echo "Running Prisma database migrations..."
-            docker compose exec -T app sh -lc "pnpm prisma migrate deploy"
+            docker compose exec -T app npx prisma db push
 
             echo "Deployment completed successfully."
