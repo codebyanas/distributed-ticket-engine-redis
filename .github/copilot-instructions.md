@@ -3,3 +3,4 @@
 - TypeScript: Strict typing. Banned keyword: any. Explicit return types required.
 - Formatting: Professional English comments only. Strictly zero emojis across codebase and logs.
 - Logging: Pino logger only via src/utils/logger.js. Zero console.log.
+- Environment Safety: Never suggest or run "Codespaces: Full Rebuild Container" unless explicitly requested, to prevent resetting VM cloud storage and clearing session state.
