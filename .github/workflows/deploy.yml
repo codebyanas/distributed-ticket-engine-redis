@@ -1,0 +1,52 @@
+name: Deploy to Azure VM
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Deploy to Azure VM
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          password: ${{ secrets.VM_PASSWORD }}
+          port: 22
+          script: |
+            set -e
+
+            echo "Changing to project directory..."
+            cd ~/distributed-ticket-engine-redis
+
+            echo "Pulling latest code from main..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "Ensuring required app files exist..."
+            test -f docker-compose.yml
+            test -f package.json
+
+            echo "Installing dependencies on the VM..."
+            if ! command -v pnpm >/dev/null 2>&1; then
+              corepack enable
+              corepack prepare pnpm@9.15.9 --activate
+            fi
+            pnpm install --frozen-lockfile
+
+            echo "Stopping old containers..."
+            docker compose down --remove-orphans || true
+
+            echo "Building and starting the application stack..."
+            docker compose up -d --build
+
+            echo "Running Prisma database migrations..."
+            docker compose exec -T app sh -lc "pnpm prisma migrate deploy"
+
+            echo "Deployment completed successfully."
