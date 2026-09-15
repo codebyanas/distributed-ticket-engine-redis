@@ -1,10 +1,11 @@
 import type { Redis } from 'ioredis';
 import { readFile } from 'node:fs/promises';
 
-export type LuaScriptName = 'slidingWindow';
+export type LuaScriptName = 'slidingWindow' | 'releaseMutex';
 
 const scriptSources: Readonly<Record<LuaScriptName, URL>> = {
 	slidingWindow: new URL('./lua/sliding_window.lua', import.meta.url),
+	releaseMutex: new URL('./lua/release_mutex.lua', import.meta.url),
 };
 
 const scriptDigests = new Map<LuaScriptName, string>();
