@@ -41,6 +41,7 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "@jest/globals": "^30.5.1",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",

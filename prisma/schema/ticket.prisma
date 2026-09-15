@@ -1,0 +1,20 @@
+enum SeatStatus {
+	AVAILABLE
+	HELD
+	SOLD
+}
+
+model Seat {
+	id        String     @id @default(cuid())
+	eventId   String
+	section   String
+	row       String
+	number    String
+	status    SeatStatus @default(AVAILABLE)
+	event     Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+	createdAt DateTime   @default(now())
+	updatedAt DateTime   @updatedAt
+
+	@@unique([eventId, section, row, number])
+	@@index([eventId, status])
+}

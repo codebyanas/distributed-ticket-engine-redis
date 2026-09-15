@@ -115,9 +115,9 @@ distributed-ticket-engine-redis/
   * **Objective:** Implement a native Redis `ZSET` Sliding Window Log Rate Limiter middleware to drop abusive traffic at the API edge.
   * **Target Deliverables:** `src/middlewares/rateLimiter.ts`, `src/scripts/lua/sliding_window.lua`, `src/config/redis.config.ts`.
 
-- [ ] **Phase 2: Database Protection & Stampede Shield** `[STATUS: IN_PROGRESS]`
+- [x] **Phase 2: Database Protection & Stampede Shield** `[STATUS: COMPLETED]`
   * **Objective:** Build a Distributed Mutex Lock (`SET NX PX`) re-hydration guard to defend PostgreSQL against thundering herd spikes when 1M+ key caches expire.
-  * **Target Deliverables:** `src/services/stampede.service.ts`, production-tuned `redis.conf` LRU memory policies.
+  * **Completed Deliverables:** `src/services/stampede.service.ts`, `src/scripts/lua/release_mutex.lua`, `tests/concurrency/stampede.concurrency.test.ts`, production-tuned `redis.conf` eviction policy, and seating-map API wiring.
 
 - [ ] **Phase 3: Atomic Concurrency & Race Condition Elimination** `[STATUS: NOT_STARTED]`
   * **Objective:** Eliminate double-booking by executing check-and-hold seat locks inside atomic C-like Redis Lua scripts (`atomic_seat_lock.lua`).
@@ -143,12 +143,12 @@ distributed-ticket-engine-redis/
 
 ## 🎯 Current Active Milestone Focus
 
-**Active Milestone:** **Phase 2 — Database Protection & Cache Stampede Shield**
+**Completed Milestone:** **Phase 2 — Database Protection & Cache Stampede Shield**
 * **Active Tasks:**
-  1. Implement a distributed mutex using Redis `SET NX PX`.
-  2. Build cache-aside seating-map re-hydration around the mutex.
-  3. Configure cache TTL and production Redis eviction policy.
-  4. Add stampede protection tests for concurrent cache misses.
+  1. Implemented a distributed mutex using Redis `SET NX PX`.
+  2. Implemented cache-aside seating-map re-hydration around the mutex.
+  3. Configured cache TTL and production Redis eviction policy.
+  4. Added stampede protection tests for concurrent cache misses.
 
 ---
 
