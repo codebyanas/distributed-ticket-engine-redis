@@ -123,11 +123,11 @@ distributed-ticket-engine-redis/
   * **Objective:** Eliminate double-booking by executing check-and-hold seat locks inside atomic C-like Redis Lua scripts (`atomic_seat_lock.lua`).
   * **Target Deliverables:** `src/scripts/lua/atomic_seat_lock.lua`, `src/services/redis-lock.service.ts`, `src/services/ticket.service.ts`, `src/controllers/ticket.controller.ts`, `src/routes/ticket.routes.ts`, `tests/concurrency/seat-lock.concurrency.test.ts`.
 
-- [ ] **Phase 4: Decoupled Order Processing & Event Streaming** `[STATUS: IN_PROGRESS]`
+- [x] **Phase 4: Decoupled Order Processing & Event Streaming** `[STATUS: COMPLETED]`
   * **Objective:** Decouple ticket settlement and emails from the HTTP request cycle using Redis Streams (`XADD`) and Consumer Groups (`XREADGROUP`).
   * **Target Deliverables:** `src/workers/stream-consumer.worker.ts`, strongly-typed event contracts in `src/types/events.types.ts`.
 
-- [ ] **Phase 5: Real-Time Seating Map Synchronization** `[STATUS: NOT_STARTED]`
+- [ ] **Phase 5: Real-Time Seating Map Synchronization** `[STATUS: IN_PROGRESS]`
   * **Objective:** Synchronize seat state changes across multi-container WebSocket servers using Redis Pub/Sub as a Backplane Adapter.
   * **Target Deliverables:** `src/websocket/pubsub.adapter.ts`, `src/websocket/socket.server.ts`.
 
@@ -143,12 +143,12 @@ distributed-ticket-engine-redis/
 
 ## 🎯 Current Active Milestone Focus
 
-**Completed Milestone:** **Phase 3 — Atomic Concurrency & Race Condition Elimination**
+**Completed Milestone:** **Phase 4 — Decoupled Order Processing & Event Streaming**
 * **Active Tasks:**
-  1. Implemented an atomic Redis-held seat state transition using a Lua check-and-set script.
-  2. Registered the Lua script with the SHA1 digest registry for ultra-fast `EVALSHA` execution.
-  3. Wrapped the atomic hold logic in the Redis lock service and ticket orchestration flow.
-  4. Added a concurrent hold regression test proving one winner and 49 conflicts under `Promise.all()`.
+  1. Added strongly typed order event contracts and Redis stream naming conventions.
+  2. Added asynchronous order creation with `XADD` publication and HTTP 202 responses.
+  3. Added consumer-group settlement with Prisma transactions, `XACK`, and PEL recovery.
+  4. Added Phase 4 integration coverage and a stream processing diagnostic benchmark.
 
 ---
 
