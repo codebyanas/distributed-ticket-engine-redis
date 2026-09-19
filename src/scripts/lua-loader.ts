@@ -1,11 +1,12 @@
 import type { Redis } from 'ioredis';
 import { readFile } from 'node:fs/promises';
 
-export type LuaScriptName = 'slidingWindow' | 'releaseMutex';
+export type LuaScriptName = 'slidingWindow' | 'releaseMutex' | 'atomicSeatLock';
 
 const scriptSources: Readonly<Record<LuaScriptName, URL>> = {
 	slidingWindow: new URL('./lua/sliding_window.lua', import.meta.url),
 	releaseMutex: new URL('./lua/release_mutex.lua', import.meta.url),
+	atomicSeatLock: new URL('./lua/atomic_seat_lock.lua', import.meta.url),
 };
 
 const scriptDigests = new Map<LuaScriptName, string>();
@@ -27,6 +28,19 @@ export const loadLuaScripts = async (client: Redis): Promise<void> => {
 		}
 		scriptDigests.set(name, digest);
 	}
+};
+
+/**
+ * Returns the embedded Lua source for a named script.
+ *
+ * @param name - Registered script identifier.
+ * @returns Script source text used for fallback EVAL calls when Redis reports NOSCRIPT.
+ * @concurrency Impact: Reads a static file from disk during fallback handling only.
+ * @complexity Time: O(S) | Space: O(S)
+ */
+export const getLuaScriptSource = async (name: LuaScriptName): Promise<string> => {
+	const sourceUrl = scriptSources[name];
+	return readFile(sourceUrl, 'utf8');
 };
 
 /**
