@@ -24,3 +24,22 @@ export interface SeatingMapBenchmarkResponse {
 	};
 	phase2Passed: boolean;
 }
+
+export interface SeatHoldBenchmarkRequest {
+	eventId: string;
+	seatId: string;
+	concurrency: number;
+}
+
+export interface SeatHoldBenchmarkResponse {
+	eventId: string;
+	targetSeatId: string;
+	concurrency: number;
+	executionMode: 'redis-atomic-lua';
+	result: {
+		successfulHolds: number;
+		conflicts: number;
+		oversellingRate: '0%';
+		totalExecutionTimeMs: number;
+	};
+}
