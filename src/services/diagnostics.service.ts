@@ -1,7 +1,15 @@
 import { clearSeatingMapCache, getSeatingMapForMode } from './stampede.service.js';
 import { getSeatLockKey, acquireSeatHold } from './redis-lock.service.js';
+import { createOrder } from './ticket.service.js';
+import { prisma } from '../config/database.config.js';
 import { redis } from '../config/redis.config.js';
+import {
+	initializeOrderConsumerGroup,
+	processAvailableOrderMessages,
+} from '../workers/stream-consumer.worker.js';
 import type {
+	OrderStreamBenchmarkRequest,
+	OrderStreamBenchmarkResponse,
 	SeatHoldBenchmarkRequest,
 	SeatHoldBenchmarkResponse,
 	SeatingMapBenchmarkRequest,
@@ -105,5 +113,52 @@ export const runSeatHoldBenchmark = async (
 			oversellingRate: '0%',
 			totalExecutionTimeMs: Date.now() - startedAt,
 		},
+	};
+};
+
+/**
+ * Publishes concurrent orders and drains them through the Phase 4 worker.
+ *
+ * @param request - Event, available seat IDs, and user prefix for the benchmark.
+ * @returns Promise resolving to a stream and database processing report.
+ * @concurrency Impact: Redis serializes each seat independently; Prisma settlement is idempotent per holdId.
+ * @complexity O(C) for C concurrent order events and bounded worker batches.
+ */
+export const runOrderStreamBenchmark = async (
+	request: OrderStreamBenchmarkRequest,
+): Promise<OrderStreamBenchmarkResponse> => {
+	await initializeOrderConsumerGroup();
+	const startedAt = Date.now();
+	const results = await Promise.allSettled(request.seatIds.map((seatId, index) =>
+		createOrder({
+			eventId: request.eventId,
+			seatId,
+			userId: `${request.userIdPrefix}-${index}`,
+		}),
+	));
+	const successfulOrders = results.flatMap((result) => result.status === 'fulfilled' ? [result.value] : []);
+	let processed = 0;
+	for (let attempt = 0; attempt < 20 && processed < successfulOrders.length; attempt += 1) {
+		const batchSize = await processAvailableOrderMessages();
+		processed += batchSize;
+		if (batchSize === 0) {
+			await new Promise<void>((resolve) => setTimeout(resolve, 10));
+		}
+	}
+
+	const orderIds = successfulOrders.map((order) => order.orderId);
+	const bookedOrders = orderIds.length === 0
+		? 0
+		: await prisma.order.count({ where: { id: { in: orderIds }, status: 'BOOKED' } });
+	const pendingSummary = await redis.xpending('stream:orders', 'order-settlement-workers') as unknown as [number, string | null, string | null, unknown[]];
+
+	return {
+		totalEventsPublished: successfulOrders.length,
+		eventsProcessedByWorker: bookedOrders,
+		pendingInStream: pendingSummary[0] ?? 0,
+		dbOrdersCreated: bookedOrders,
+		averageProcessingTimeMs: successfulOrders.length === 0
+			? 0
+			: Number(((Date.now() - startedAt) / successfulOrders.length).toFixed(2)),
 	};
 };

@@ -1,0 +1,53 @@
+{
+  "info": {
+    "name": "EventLock Engine - Phase 4 Order Streams",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "eventId", "value": "phase-2-demo-event" },
+    { "key": "seatId", "value": "phase-2-demo-event-1-1-1" }
+  ],
+  "item": [
+    {
+      "name": "Create asynchronous order",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"seatId\": \"{{seatId}}\",\n  \"userId\": \"postman-user-1\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/tickets/orders"
+      },
+      "response": [
+        {
+          "name": "202 Processing",
+          "status": "Accepted",
+          "code": 202,
+          "body": "{\n  \"orderId\": \"cm_order_example\",\n  \"status\": \"PROCESSING\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Phase 4 stream benchmark",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"seatIds\": [\n    \"phase-2-demo-event-1-1-1\",\n    \"phase-2-demo-event-1-1-2\",\n    \"phase-2-demo-event-1-1-3\"\n  ],\n  \"userIdPrefix\": \"postman-benchmark-user\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/diagnostics/order-stream/benchmark"
+      },
+      "response": [
+        {
+          "name": "Benchmark report",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"totalEventsPublished\": 3,\n  \"eventsProcessedByWorker\": 3,\n  \"pendingInStream\": 0,\n  \"dbOrdersCreated\": 3,\n  \"averageProcessingTimeMs\": 12\n}"
+        }
+      ]
+    }
+  ]
+}

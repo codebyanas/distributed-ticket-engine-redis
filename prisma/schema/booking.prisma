@@ -1,0 +1,20 @@
+enum OrderStatus {
+	PROCESSING
+	BOOKED
+	FAILED
+}
+
+model Order {
+	id        String      @id @default(cuid())
+	holdId    String      @unique
+	eventId   String
+	seatId    String
+	userId    String
+	expiresAt DateTime
+	status    OrderStatus @default(PROCESSING)
+	createdAt DateTime    @default(now())
+	updatedAt DateTime    @updatedAt
+
+	@@index([eventId, seatId])
+	@@index([status, createdAt])
+}

@@ -37,6 +37,15 @@ export interface HoldSeatRequest {
 	userId: string;
 }
 
+export interface CreateOrderRequest extends HoldSeatRequest {
+	userId: string;
+}
+
+export interface CreateOrderResponse {
+	orderId: string;
+	status: 'PROCESSING';
+}
+
 export interface SeatHoldRecord {
 	holdId: string;
 	eventId: string;

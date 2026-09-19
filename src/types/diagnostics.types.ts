@@ -43,3 +43,17 @@ export interface SeatHoldBenchmarkResponse {
 		totalExecutionTimeMs: number;
 	};
 }
+
+export interface OrderStreamBenchmarkRequest {
+	eventId: string;
+	seatIds: string[];
+	userIdPrefix: string;
+}
+
+export interface OrderStreamBenchmarkResponse {
+	totalEventsPublished: number;
+	eventsProcessedByWorker: number;
+	pendingInStream: number;
+	dbOrdersCreated: number;
+	averageProcessingTimeMs: number;
+}

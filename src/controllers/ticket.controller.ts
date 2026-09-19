@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { z } from 'zod';
-import { holdSeat } from '../services/ticket.service.js';
-import type { HoldSeatRequest } from '../types/ticket.types.js';
+import { createOrder, holdSeat } from '../services/ticket.service.js';
+import type { CreateOrderRequest, HoldSeatRequest } from '../types/ticket.types.js';
 import { BadRequestError } from '../utils/custom-errors.js';
 
 const holdSeatRequestSchema = z.object({
@@ -9,6 +9,8 @@ const holdSeatRequestSchema = z.object({
 	seatId: z.string().min(1, 'seatId is required'),
 	userId: z.string().min(1, 'userId is required'),
 });
+
+const createOrderRequestSchema = holdSeatRequestSchema;
 
 /**
  * Handles seat-hold requests from the HTTP API layer.
@@ -28,4 +30,23 @@ export const holdSeatHandler = async (request: Request, response: Response): Pro
 
 	const result = await holdSeat(parsed.data as HoldSeatRequest);
 	response.status(result.statusCode).json(result);
+};
+
+/**
+ * Accepts a seat order for asynchronous stream settlement.
+ *
+ * @param request - Express request containing event, seat, and user identifiers.
+ * @param response - Express response returning the durable processing order ID.
+ * @returns Promise resolving after the HTTP 202 response is sent.
+ * @concurrency Impact: The request performs only Redis hold and stream publication; settlement runs in a worker.
+ * @complexity Time: O(log N) for the seat lookup plus O(1) Redis stream publication.
+ */
+export const createOrderHandler = async (request: Request, response: Response): Promise<void> => {
+	const parsed = createOrderRequestSchema.safeParse(request.body);
+	if (!parsed.success) {
+		throw new BadRequestError(parsed.error.issues[0]?.message ?? 'Request validation failed');
+	}
+
+	const result = await createOrder(parsed.data as CreateOrderRequest);
+	response.status(202).json(result);
 };
