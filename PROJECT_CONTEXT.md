@@ -119,11 +119,11 @@ distributed-ticket-engine-redis/
   * **Objective:** Build a Distributed Mutex Lock (`SET NX PX`) re-hydration guard to defend PostgreSQL against thundering herd spikes when 1M+ key caches expire.
   * **Completed Deliverables:** `src/services/stampede.service.ts`, `src/scripts/lua/release_mutex.lua`, `tests/concurrency/stampede.concurrency.test.ts`, production-tuned `redis.conf` eviction policy, and seating-map API wiring.
 
-- [ ] **Phase 3: Atomic Concurrency & Race Condition Elimination** `[STATUS: NOT_STARTED]`
+- [x] **Phase 3: Atomic Concurrency & Race Condition Elimination** `[STATUS: COMPLETED]`
   * **Objective:** Eliminate double-booking by executing check-and-hold seat locks inside atomic C-like Redis Lua scripts (`atomic_seat_lock.lua`).
-  * **Target Deliverables:** `src/scripts/lua/atomic_seat_lock.lua`, `tests/concurrency/seat-lock.concurrency.test.ts`.
+  * **Target Deliverables:** `src/scripts/lua/atomic_seat_lock.lua`, `src/services/redis-lock.service.ts`, `src/services/ticket.service.ts`, `src/controllers/ticket.controller.ts`, `src/routes/ticket.routes.ts`, `tests/concurrency/seat-lock.concurrency.test.ts`.
 
-- [ ] **Phase 4: Decoupled Order Processing & Event Streaming** `[STATUS: NOT_STARTED]`
+- [ ] **Phase 4: Decoupled Order Processing & Event Streaming** `[STATUS: IN_PROGRESS]`
   * **Objective:** Decouple ticket settlement and emails from the HTTP request cycle using Redis Streams (`XADD`) and Consumer Groups (`XREADGROUP`).
   * **Target Deliverables:** `src/workers/stream-consumer.worker.ts`, strongly-typed event contracts in `src/types/events.types.ts`.
 
@@ -143,12 +143,12 @@ distributed-ticket-engine-redis/
 
 ## 🎯 Current Active Milestone Focus
 
-**Completed Milestone:** **Phase 2 — Database Protection & Cache Stampede Shield**
+**Completed Milestone:** **Phase 3 — Atomic Concurrency & Race Condition Elimination**
 * **Active Tasks:**
-  1. Implemented a distributed mutex using Redis `SET NX PX`.
-  2. Implemented cache-aside seating-map re-hydration around the mutex.
-  3. Configured cache TTL and production Redis eviction policy.
-  4. Added stampede protection tests for concurrent cache misses.
+  1. Implemented an atomic Redis-held seat state transition using a Lua check-and-set script.
+  2. Registered the Lua script with the SHA1 digest registry for ultra-fast `EVALSHA` execution.
+  3. Wrapped the atomic hold logic in the Redis lock service and ticket orchestration flow.
+  4. Added a concurrent hold regression test proving one winner and 49 conflicts under `Promise.all()`.
 
 ---
 
