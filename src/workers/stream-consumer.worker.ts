@@ -3,10 +3,12 @@ import type { Redis } from 'ioredis';
 import { prisma } from '../config/database.config.js';
 import { redis } from '../config/redis.config.js';
 import { logger } from '../utils/logger.js';
+import { pubSubAdapter } from '../websocket/pubsub.adapter.js';
 import {
 	ORDER_CONSUMER_GROUP,
 	ORDER_EVENT_TYPE,
 	ORDER_STREAM_KEY,
+	WEBSOCKET_SEAT_EVENT_SCHEMA_VERSION,
 	type OrderCreatedEventPayload,
 	type RedisStreamMessage,
 } from '../types/events.types.js';
@@ -103,7 +105,25 @@ const processMessage = async (client: Redis, message: RedisStreamMessage): Promi
 		if (message.fields.eventType !== ORDER_EVENT_TYPE || message.fields.schemaVersion !== '1') {
 			throw new Error(`Unsupported order event: ${message.id}`);
 		}
-		await settleOrder(parsePayload(message));
+		const payload = parsePayload(message);
+		await settleOrder(payload);
+		try {
+			await pubSubAdapter.publishSeatEvent({
+				eventId: randomUUID(),
+				eventType: 'seat.booked',
+				schemaVersion: WEBSOCKET_SEAT_EVENT_SCHEMA_VERSION,
+				occurredAt: new Date().toISOString(),
+				correlationId: payload.orderId,
+				payload: {
+					eventId: payload.eventId,
+					seatId: payload.seatId,
+					orderId: payload.orderId,
+					status: 'SOLD',
+				},
+			});
+		} catch (error: unknown) {
+			logger.error({ err: error, orderId: payload.orderId }, 'Failed to publish seat booked event');
+		}
 		await client.xack(ORDER_STREAM_KEY, ORDER_CONSUMER_GROUP, message.id);
 	} catch (error: unknown) {
 		logger.error({ err: error, streamMessageId: message.id }, 'Order stream message processing failed');

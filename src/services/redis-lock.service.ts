@@ -61,6 +61,7 @@ export const acquireSeatHold = async (
 			1,
 			key,
 			userId,
+			holdId,
 			effectiveTtl,
 		) as number;
 
@@ -80,6 +81,7 @@ export const acquireSeatHold = async (
 			1,
 			key,
 			userId,
+			holdId,
 			effectiveTtl,
 		) as number;
 
@@ -89,6 +91,50 @@ export const acquireSeatHold = async (
 			ttlSeconds: effectiveTtl,
 			expiresAt: Date.now() + effectiveTtl * 1000,
 		};
+	}
+};
+
+/**
+ * Releases a held seat only when the caller still owns the exact hold.
+ *
+ * @param eventId - Event identifier for the target seat.
+ * @param seatId - Seat identifier scoped under the event.
+ * @param userId - User that created the hold.
+ * @param holdId - Exact hold identifier stored in the Redis value.
+ * @param client - Redis client used to execute the atomic release script.
+ * @returns Promise resolving to true when the Redis hold was deleted.
+ * @concurrency Impact: Redis verifies ownership and deletes the key atomically, preventing stale releases from removing newer holds.
+ * @complexity Time: O(1) | Space: O(1)
+ */
+export const releaseSeatHold = async (
+	eventId: string,
+	seatId: string,
+	userId: string,
+	holdId: string,
+	client: Redis = redis,
+): Promise<boolean> => {
+	const key = seatLockKey(eventId, seatId);
+	try {
+		const result = await client.evalsha(
+			getLuaScriptDigest('releaseSeat'),
+			1,
+			key,
+			userId,
+			holdId,
+		) as number;
+		return result === 1;
+	} catch (error: unknown) {
+		if (!isNoscriptError(error)) {
+			throw error;
+		}
+		const result = await client.eval(
+			await getLuaScriptSource('releaseSeat'),
+			1,
+			key,
+			userId,
+			holdId,
+		) as number;
+		return result === 1;
 	}
 };
 

@@ -1,6 +1,7 @@
 local key = KEYS[1]
 local user_id = ARGV[1]
-local ttl_seconds = tonumber(ARGV[2])
+local hold_id = ARGV[2]
+local ttl_seconds = tonumber(ARGV[3])
 
 if ttl_seconds == nil or ttl_seconds <= 0 then
   return 0
@@ -11,6 +12,7 @@ if current_value == false then
   local payload = cjson.encode({
     status = 'HELD',
     userId = user_id,
+    holdId = hold_id,
     createdAt = tonumber(redis.call('TIME')[1]),
     expiresAt = tonumber(redis.call('TIME')[1]) + ttl_seconds
   })

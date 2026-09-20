@@ -3,11 +3,14 @@ import type { Redis } from 'ioredis';
 import { prisma } from '../config/database.config.js';
 import { redis } from '../config/redis.config.js';
 import { BadRequestError, ConflictError, NotFoundError } from '../utils/custom-errors.js';
-import { acquireSeatHold } from './redis-lock.service.js';
+import { logger } from '../utils/logger.js';
+import { pubSubAdapter } from '../websocket/pubsub.adapter.js';
+import { acquireSeatHold, releaseSeatHold } from './redis-lock.service.js';
 import {
 	ORDER_EVENT_SCHEMA_VERSION,
 	ORDER_EVENT_TYPE,
 	ORDER_STREAM_KEY,
+	WEBSOCKET_SEAT_EVENT_SCHEMA_VERSION,
 } from '../types/events.types.js';
 import type {
 	CreateOrderRequest,
@@ -15,9 +18,21 @@ import type {
 	HoldSeatRequest,
 	HoldSeatResponse,
 	SeatHoldRecord,
+	ReleaseSeatRequest,
+	ReleaseSeatResponse,
 } from '../types/ticket.types.js';
 
 const DEFAULT_HOLD_TTL_SECONDS = 600;
+
+const publishSeatEvent = async (
+	event: Parameters<typeof pubSubAdapter.publishSeatEvent>[0],
+): Promise<void> => {
+	try {
+		await pubSubAdapter.publishSeatEvent(event);
+	} catch (error: unknown) {
+		logger.error({ err: error, eventId: event.eventId, eventType: event.eventType }, 'Failed to publish seat event');
+	}
+};
 
 /**
  * Validates the seat-hold request payload.
@@ -97,6 +112,14 @@ export const holdSeat = async (
 			status: 'HELD',
 			expiresAt: new Date(execution.expiresAt).toISOString(),
 		};
+		await publishSeatEvent({
+			eventId: randomUUID(),
+			eventType: 'seat.held',
+			schemaVersion: WEBSOCKET_SEAT_EVENT_SCHEMA_VERSION,
+			occurredAt: new Date().toISOString(),
+			correlationId: record.holdId,
+			payload: record,
+		});
 
 		return {
 			status: 'success',
@@ -167,6 +190,21 @@ export const createOrder = async (
 		});
 	});
 
+	await publishSeatEvent({
+		eventId: randomUUID(),
+		eventType: 'seat.held',
+		schemaVersion: WEBSOCKET_SEAT_EVENT_SCHEMA_VERSION,
+		occurredAt: new Date().toISOString(),
+		correlationId: execution.holdId,
+		payload: {
+			eventId: request.eventId,
+			seatId: request.seatId,
+			holdId: execution.holdId,
+			status: 'HELD',
+			expiresAt: new Date(execution.expiresAt).toISOString(),
+		},
+	});
+
 	const eventId = randomUUID();
 	const eventPayload = {
 		eventId,
@@ -199,4 +237,50 @@ export const createOrder = async (
 	);
 
 	return { orderId: order.id, status: 'PROCESSING' };
+};
+
+/**
+ * Releases a caller-owned temporary hold and broadcasts the available state.
+ *
+ * @param payload - Event, seat, user, and ownership identifiers.
+ * @param client - Redis client used for the atomic release.
+ * @returns Promise resolving to the release response.
+ * @concurrency Impact: Redis validates ownership and deletes the hold atomically before the database seat is made available.
+ * @complexity Time: O(1) Redis release plus O(1) indexed database mutation.
+ */
+export const releaseSeat = async (
+	payload: ReleaseSeatRequest,
+	client: Redis = redis,
+): Promise<ReleaseSeatResponse> => {
+	const request = normalizeHoldRequest(payload);
+	if (payload.holdId.trim().length === 0) {
+		throw new BadRequestError('holdId is required');
+	}
+	const existingOrder = await prisma.order.findUnique({ where: { holdId: payload.holdId } });
+	if (existingOrder !== null) {
+		throw new ConflictError('Seat hold is already associated with an order');
+	}
+	const released = await releaseSeatHold(request.eventId, request.seatId, request.userId, payload.holdId, client);
+	if (!released) {
+		throw new ConflictError('Seat hold is unavailable or owned by another user');
+	}
+	await prisma.seat.updateMany({
+		where: { id: request.seatId, eventId: request.eventId, status: 'HELD' },
+		data: { status: 'AVAILABLE' },
+	});
+	await publishSeatEvent({
+		eventId: randomUUID(),
+		eventType: 'seat.released',
+		schemaVersion: WEBSOCKET_SEAT_EVENT_SCHEMA_VERSION,
+		occurredAt: new Date().toISOString(),
+		correlationId: payload.holdId,
+		payload: {
+			eventId: request.eventId,
+			seatId: request.seatId,
+			holdId: payload.holdId,
+			status: 'AVAILABLE',
+			reason: 'released',
+		},
+	});
+	return { status: 'released', eventId: request.eventId, seatId: request.seatId, holdId: payload.holdId };
 };

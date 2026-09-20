@@ -127,11 +127,11 @@ distributed-ticket-engine-redis/
   * **Objective:** Decouple ticket settlement and emails from the HTTP request cycle using Redis Streams (`XADD`) and Consumer Groups (`XREADGROUP`).
   * **Target Deliverables:** `src/workers/stream-consumer.worker.ts`, strongly-typed event contracts in `src/types/events.types.ts`.
 
-- [ ] **Phase 5: Real-Time Seating Map Synchronization** `[STATUS: IN_PROGRESS]`
+- [x] **Phase 5: Real-Time Seating Map Synchronization** `[STATUS: COMPLETED]`
   * **Objective:** Synchronize seat state changes across multi-container WebSocket servers using Redis Pub/Sub as a Backplane Adapter.
   * **Target Deliverables:** `src/websocket/pubsub.adapter.ts`, `src/websocket/socket.server.ts`.
 
-- [ ] **Phase 6: Geospatial Concert Search Engine** `[STATUS: NOT_STARTED]`
+- [ ] **Phase 6: Geospatial Concert Search Engine** `[STATUS: IN_PROGRESS]`
   * **Objective:** Implement sub-millisecond location-based venue search filtering within dynamic radius using Redis `GEOSEARCH`.
   * **Target Deliverables:** `src/services/geo.service.ts`, `src/routes/event.routes.ts`.
 
@@ -143,12 +143,11 @@ distributed-ticket-engine-redis/
 
 ## 🎯 Current Active Milestone Focus
 
-**Completed Milestone:** **Phase 4 — Decoupled Order Processing & Event Streaming**
+**Completed Milestone:** **Phase 5 — Real-Time Seating Map Synchronization**
+**Next Active Milestone:** **Phase 6 — Geospatial Concert Search Engine**
 * **Active Tasks:**
-  1. Added strongly typed order event contracts and Redis stream naming conventions.
-  2. Added asynchronous order creation with `XADD` publication and HTTP 202 responses.
-  3. Added consumer-group settlement with Prisma transactions, `XACK`, and PEL recovery.
-  4. Added Phase 4 integration coverage and a stream processing diagnostic benchmark.
+  1. Implement Redis GEOSEARCH venue lookup with dynamic radius filtering.
+  2. Wire geospatial discovery into event routes and service contracts.
 
 ---
 
