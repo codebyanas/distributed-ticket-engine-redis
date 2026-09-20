@@ -2,7 +2,7 @@
   "name": "distributed-ticket-engine-redis",
   "version": "1.0.0",
   "type": "module",
-  "packageManager": "pnpm@9.15.9",
+  "packageManager": "pnpm@12.5.1",
   "scripts": {
     "dev": "tsx watch src/server.ts | pino-pretty --translateTime HH:MM:ss Z --ignore pid,hostname,req,res,env",
     "build": "prisma generate && tsc",

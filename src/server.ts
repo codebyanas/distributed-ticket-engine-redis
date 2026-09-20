@@ -6,6 +6,7 @@ import { connectRedis, disconnectRedis } from './config/redis.config.js';
 import { logger } from './utils/logger.js';
 import { startOrderConsumer, stopOrderConsumer } from './workers/stream-consumer.worker.js';
 import { startWebSocketServer } from './websocket/socket.server.js';
+import { syncVenuesToGeoIndex } from './services/geo.service.js';
 
 /**
  * Initializes and starts the HTTP listener on the configured port.
@@ -17,6 +18,7 @@ const startServer = async (): Promise<http.Server> => {
   // Verify PostgreSQL Database Connection
   await connectDatabase();
   await connectRedis();
+  await syncVenuesToGeoIndex();
   const server = http.createServer(app);
   const webSocketLifecycle = await startWebSocketServer(server);
   void startOrderConsumer().catch((error: unknown) => {

@@ -2,9 +2,23 @@ model Event {
 	id        String   @id @default(cuid())
 	name      String
 	startsAt  DateTime
+	venueId   String?
+	venue     Venue?   @relation(fields: [venueId], references: [id], onDelete: SetNull)
+	isActive  Boolean  @default(true)
 	seats     Seat[]
 	createdAt DateTime @default(now())
 	updatedAt DateTime @updatedAt
 
+	@@index([venueId, isActive, startsAt])
 	@@index([startsAt])
+}
+
+model Venue {
+	id        String   @id
+	name      String
+	latitude  Decimal  @db.Decimal(9, 6)
+	longitude Decimal  @db.Decimal(9, 6)
+	events    Event[]
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
 }
