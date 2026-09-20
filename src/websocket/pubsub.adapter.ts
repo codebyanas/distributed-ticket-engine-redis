@@ -88,6 +88,9 @@ class RedisPubSubAdapter {
 	 * @complexity Time: O(N) in Redis subscriber count.
 	 */
 	public async publishSeatEvent(event: WebSocketSeatEvent): Promise<void> {
+		if (!this.connected) {
+			throw new Error('Redis WebSocket Pub/Sub adapter is not connected');
+		}
 		await this.publisher.publish(WS_SEAT_EVENTS_CHANNEL, JSON.stringify(event));
 	}
 
