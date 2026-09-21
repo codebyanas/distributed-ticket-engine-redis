@@ -27,7 +27,10 @@ pnpm prisma:generate
 
 echo
 echo "=== Push database schema ==="
-pnpm exec prisma db push
+until pnpm exec prisma db push; do
+	echo "Waiting for PostgreSQL to accept Prisma connections..."
+	sleep 3
+done
 
 echo
 echo "=== Build and type-check ==="

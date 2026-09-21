@@ -34,10 +34,10 @@ jobs:
             docker compose down --remove-orphans || true
 
             echo "Starting Database and Redis first..."
-            docker compose up -d --build postgres redis
+            docker compose up -d --build --wait postgres redis
 
             echo "Running Prisma migrations in a temporary container..."
-            docker compose run --rm -v ./prisma:/app/prisma app ./node_modules/.bin/prisma db push
+            docker compose run --rm -v ./prisma:/app/prisma -v ./prisma.config.ts:/app/prisma.config.ts:ro app sh -c 'until ./node_modules/.bin/prisma db push; do echo "Waiting for PostgreSQL to accept Prisma connections..."; sleep 3; done'
 
             echo "Starting Application and Worker services..."
             docker compose up -d app worker
