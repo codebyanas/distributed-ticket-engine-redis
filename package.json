@@ -17,7 +17,7 @@
     "docker:down": "docker compose down",
     "docker:restart": "docker compose restart",
     "docker:status": "docker compose ps",
-    "ci:local": "scripts\\ci-local.cmd",
+    "ci:local": "sh scripts/ci-local.sh",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
     "test:cov": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --coverage",
     "test:concurrency": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js tests/concurrency --runInBand",

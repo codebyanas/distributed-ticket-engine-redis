@@ -37,7 +37,7 @@ jobs:
             docker compose up -d --build postgres redis
 
             echo "Running Prisma migrations in a temporary container..."
-            docker compose run --rm app ./node_modules/.bin/prisma db push
+            docker compose run --rm -v ./prisma:/app/prisma app ./node_modules/.bin/prisma db push
 
             echo "Starting Application and Worker services..."
             docker compose up -d app worker
