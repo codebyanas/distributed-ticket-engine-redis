@@ -2,7 +2,7 @@
   "name": "distributed-ticket-engine-redis",
   "version": "1.0.0",
   "type": "module",
-  "packageManager": "pnpm@12.5.1",
+  "packageManager": "pnpm@9.15.9+sha512.68046141893c66fad01c079231128e9afb89ef87e2691d69e4d40eee228988295fd4682181bae55b58418c3a253bde65a505ec7c5f9403ece5cc3cd37dcf2531",
   "scripts": {
     "dev": "tsx watch src/server.ts | pino-pretty --translateTime HH:MM:ss Z --ignore pid,hostname,req,res,env",
     "build": "prisma generate && tsc",
@@ -21,8 +21,13 @@
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
     "test:cov": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --coverage",
     "test:concurrency": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js tests/concurrency --runInBand",
-    "benchmark": "autocannon -c 100 -d 30 http://localhost:5000/api/v1/rate-limit-test",
-    "benchmark:rate-limit": "autocannon -c 20 -d 5 http://localhost:5000/api/v1/rate-limit-test"
+    "benchmark": "node benchmarks/autocannon.mjs hold-hotspot",
+    "benchmark:hold": "node benchmarks/autocannon.mjs hold-pool",
+    "benchmark:hotspot": "node benchmarks/autocannon.mjs hold-hotspot",
+    "benchmark:geo": "node benchmarks/autocannon.mjs geo-search",
+    "benchmark:orders": "node benchmarks/autocannon.mjs orders",
+    "benchmark:rate-limit": "autocannon -c 20 -d 5 http://localhost:5000/api/v1/rate-limit-test",
+    "benchmark:k6": "k6 run benchmarks/k6.js"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

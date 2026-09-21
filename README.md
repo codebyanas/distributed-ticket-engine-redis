@@ -196,7 +196,7 @@ distributed-ticket-engine-redis/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 * **Node.js:** v20.x or higher
@@ -204,9 +204,9 @@ distributed-ticket-engine-redis/
 
 ### 1. Clone & Install
 ```bash
-git clone [https://github.com/your-username/distributed-ticket-engine-redis.git](https://github.com/your-username/distributed-ticket-engine-redis.git)
+git clone https://github.com/your-username/distributed-ticket-engine-redis.git
 cd distributed-ticket-engine-redis
-npm install
+pnpm install --frozen-lockfile
 ```
 
 ### 2. Environment Configuration
@@ -219,7 +219,7 @@ NODE_ENV=development
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_USER=admin
-POSTGRES_PASSWORD=secret
+POSTGRES_PASSWORD=your_postgres_password
 POSTGRES_DB=eventlock_db
 
 # Redis Config
@@ -227,27 +227,63 @@ REDIS_HOST=localhost
 REDIS_PORT=6379
 ```
 
-### 3. Spin Up Infrastructure (Postgres + Redis)
+### 3. Build and Start the Full Compose Stack
 ```bash
-docker compose up -d
+docker compose up -d --build
+docker compose ps
+```
+
+The Compose migration service applies pending migrations before the API and worker start. Seed the benchmark fixtures after the services become healthy:
+
+```bash
+docker compose run --rm migrate pnpm run prisma:seed
 ```
 
 ### 4. Run Development Server
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 ### 5. Run Automated Concurrency Tests
 Execute parallel race condition tests simulating 50 concurrent requests hitting a single seat simultaneously:
 ```bash
-npm run test:concurrency
+pnpm run test:concurrency
 ```
 
-### 6. Run High-Concurrency Load Benchmark
-Simulate 20,000 RPS using `autocannon`:
+### 6. Run High-Concurrency Load Benchmarks
+
+The harnesses use the seeded `phase-2-demo-event` fixture by default. Override `BENCHMARK_EVENT_ID`, `BENCHMARK_SEAT_ID`, `BENCHMARK_CONNECTIONS`, and `BENCHMARK_DURATION_SECONDS` for another fixture. A 409 response in the hotspot scenario is expected business contention and must be reported separately from 5xx failures.
+
+Run endpoint-specific Autocannon scenarios:
+
 ```bash
-npm run benchmark
+pnpm run benchmark:hold
+pnpm run benchmark:hotspot
+pnpm run benchmark:geo
+pnpm run benchmark:orders
 ```
+
+Run the staged k6 workload, which ramps to a 20,000 request-per-second target:
+
+```bash
+BENCHMARK_SCENARIO=geo-search k6 run benchmarks/k6.js
+BENCHMARK_SCENARIO=hold-hotspot k6 run benchmarks/k6.js
+BENCHMARK_SCENARIO=orders k6 run benchmarks/k6.js
+```
+
+### Phase 7 Performance Matrix
+
+Record actual values from each benchmark run below. `p50`, `p95`, and `p99` are request latency percentiles in milliseconds. Do not replace `Pending local run` with a claim until the workload completes with the documented error-rate and resource checks.
+
+| Scenario | Target RPS | Achieved RPS | p50 | p95 | p99 | Error Rate | Duration |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Seat hold, fixture pool | 20,000 | Pending local run | Pending | Pending | Pending | Pending | 30s |
+| Seat hold, hotspot contention | 20,000 | Pending local run | Pending | Pending | Pending | Pending | 30s |
+| Geo search | 20,000 | Pending local run | Pending | Pending | Pending | Pending | 30s |
+| Async order acceptance | 20,000 | Pending local run | Pending | Pending | Pending | Pending | 30s |
+| Mixed staged k6 workload | 20,000 | Pending local run | Pending | Pending | Pending | Pending | 240s |
+
+Benchmark acceptance requires no unexpected 5xx responses, zero double-booking, bounded Redis stream backlog, healthy PostgreSQL connections, and separately reported expected 409 contention responses.
 
 ---
 

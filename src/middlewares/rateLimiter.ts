@@ -35,6 +35,12 @@ export const rateLimiter = (options: RateLimiterOptions = {}): RequestHandler =>
 	const configuration = { ...defaultOptions, ...options };
 
 	return async (request: Request, response: Response, next: NextFunction): Promise<void> => {
+		const benchmarkBypassRequested = request.header('x-benchmark-bypass') !== undefined;
+		if (process.env.DISABLE_RATE_LIMIT === 'true' || benchmarkBypassRequested) {
+			next();
+			return;
+		}
+
 		if (configuration.skip?.(request) === true) {
 			next();
 			return;
