@@ -40,6 +40,6 @@ jobs:
             docker compose up -d --build
 
             echo "Running Prisma database migrations..."
-            docker compose exec -T app pnpm exec prisma db push
+            docker compose exec -T app ./node_modules/.bin/prisma db push
 
             echo "Deployment completed successfully."
