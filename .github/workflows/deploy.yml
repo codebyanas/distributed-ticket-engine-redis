@@ -25,8 +25,9 @@ jobs:
             echo "Changing to project directory..."
             cd ~/distributed-ticket-engine-redis
 
-            echo "Pulling latest code from main..."
-            git fetch origin main
+            echo "Cleaning stale Git locks & force pulling latest code..."
+            rm -f .git/refs/remotes/origin/main.lock .git/index.lock .git/FETCH_HEAD || true
+            git fetch origin main --prune --force
             git reset --hard origin/main
 
             echo "Ensuring required app files exist..."
