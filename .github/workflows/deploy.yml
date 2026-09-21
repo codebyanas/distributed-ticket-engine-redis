@@ -30,17 +30,16 @@ jobs:
             git fetch origin main --prune --force
             git reset --hard origin/main
 
-            echo "Ensuring required app files exist..."
-            test -f docker-compose.yml
-            test -f package.json
-
             echo "Stopping old containers..."
             docker compose down --remove-orphans || true
 
-            echo "Building and starting the application stack..."
-            docker compose up -d --build
+            echo "Starting Database and Redis first..."
+            docker compose up -d --build postgres redis
 
-            echo "Running Prisma database migrations..."
-            docker compose exec -T app ./node_modules/.bin/prisma db push
+            echo "Running Prisma migrations in a temporary container..."
+            docker compose run --rm app ./node_modules/.bin/prisma db push
+
+            echo "Starting Application and Worker services..."
+            docker compose up -d app worker
 
             echo "Deployment completed successfully."
