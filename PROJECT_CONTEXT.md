@@ -1,4 +1,4 @@
-# 🚀 PROJECT_CONTEXT.md — System Blueprint & Active State Tracking
+# PROJECT_CONTEXT.md — System Blueprint & Active State Tracking
 
 > **System Identity:** `distributed-ticket-engine-redis` (`EventLock Engine`)  
 > **Architecture:** Distributed High-Concurrency Ticket & Seat Reservation Engine  
