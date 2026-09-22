@@ -26,7 +26,7 @@
 
 ```
 distributed-ticket-engine-redis/
-├── .env.example                  # Environment variables template
+├── .env.example                  # Environment variables template 
 ├── .gitignore                    # Git ignore rules
 ├── AI_RULES.md                   # AI coding constraints & enterprise rules
 ├── PROJECT_CONTEXT.md            # Master architecture & active state blueprint
