@@ -4,7 +4,7 @@
 
 ---
 
-## 📌 Executive Summary & Core Problem
+## 📌 Executive Summary & Core Problem 
 
 During high-concurrency flash sales and ticket drops (e.g., FIFA tickets, Daraz 11.11, BookMe), platforms experience massive traffic spikes exceeding **100,000+ requests per second**. Traditional relational databases (PostgreSQL/MySQL) fail under this load due to connection pool exhaustion and locking overhead.
 
