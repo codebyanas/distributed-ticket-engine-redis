@@ -13,6 +13,7 @@ import { syncVenuesToGeoIndex } from './services/geo.service.js';
  * 
  * @returns Promise resolving to active HTTP Server instance.
  */
+
 const startServer = async (): Promise<http.Server> => {
   // Verify PostgreSQL Database Connection
   await connectDatabase();
