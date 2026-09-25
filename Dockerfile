@@ -27,6 +27,8 @@ ENV NODE_ENV=production
 RUN corepack enable
 RUN corepack prepare pnpm@12.5.1 --activate
 COPY --from=build /app/dist ./dist
+# Lua scripts ko compiled dist folder mein move karne ke liye ye line zaroori hai:
+COPY --from=build /app/src/scripts/lua ./dist/scripts/lua
 COPY --from=production-deps /app/node_modules ./node_modules
 COPY prisma ./prisma
 COPY --from=build /app/prisma.config.ts ./prisma.config.ts
